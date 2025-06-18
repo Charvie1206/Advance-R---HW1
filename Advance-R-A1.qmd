@@ -1,0 +1,308 @@
+---
+title: "Youth and Education Investment: A Cross-Country Analysis"
+author: "Charvie Kukreja-24202861"
+format:
+  revealjs:
+    theme: solarized
+    slide-number: true
+    toc: true
+    incremental: true
+    css: styles.css
+    center: true   
+fontsize: 22pt
+mainfont: "Segoe UI"
+---
+
+# Introduction
+
+This presentation explores economic, environmental, social, and development indicators across three countries:
+
+-   **USA**
+-   **Luxembourg**
+-   **India**
+
+We use `data.table` for efficient data handling and `ggplot2` for visualization.
+
+```{r}
+#| include: false
+# Load required packages
+library(data.table)
+library(ggplot2)
+library(skimr)
+```
+
+# Narrative and Objective
+
+We investigate the relationship between **education investment** and **youth development**, focusing on:
+
+-   Youth not in education, employment or training
+
+-   Gender parity in school enrollment
+
+-   Tertiary education attainment
+
+-   Adolescent fertility rate
+
+# Data Overview
+
+Source: \[Humanitarian Data Exchange - World Bank Indicators\]
+
+Indicators from:
+
+-   India (IND)
+
+-   United States (USA)
+
+-   Luxembourg (LUX)
+
+Years: varies per indicator (mostly 1990–2022)
+
+# Loading and Merging Data
+
+```{r}
+# Load files
+ind <- fread("indicators_ind.csv")
+usa <- fread("indicators_usa.csv")
+lux <- fread("indicators_lux.csv")
+
+# Merge
+dt <- rbindlist(list(ind, usa, lux))
+dt
+```
+
+# Filter Selected Indicators
+
+```{r}
+indicators <- c(
+  "Share of youth not in education, employment or training, total (% of youth population)",
+  "School enrollment, primary and secondary (gross), gender parity index (GPI)",
+  "Government expenditure on education, total (% of GDP)",
+  "Educational attainment, at least completed post-secondary, population 25+, total (%) (cumulative)",
+  "Adolescent fertility rate (births per 1,000 women ages 15-19)"
+)
+
+dt_sel <- dt[`Indicator Name` %in% indicators]
+dt_sel
+```
+
+# Variable Summary
+
+```{r}
+skim(dt_sel)
+```
+
+# Youth not in Education/training
+
+```{r}
+neet <- dt_sel[`Indicator Name` == indicators[1]]
+
+# Better styled plot
+ggplot(neet, aes(x = Year, y = Value, color = `Country Name`, group = `Country Name`)) +
+  geom_line(size = 1.3) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Youth Not in Education, Employment or Training (NEET)",
+    subtitle = "Trends across India, Luxembourg, and United States",
+    y = "% of Youth (15–24)",
+    x = "Year",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+-   India shows the **highest NEET rate** and a **rising trend**, highlighting youth disengagement.
+
+-   Luxembourg maintains consistently low levels.
+
+-   The US exhibits a moderate but more stable pattern.
+
+# Gender Parity in Enrollment
+
+```{r}
+gpi <- dt_sel[`Indicator Name` == indicators[2]]
+gpi[, `:=`(Value = as.numeric(Value), Year = as.integer(Year))]
+
+ggplot(gpi, aes(x = Year, y = Value, color = `Country Name`, group = `Country Name`)) +
+  geom_line(size = 1.3) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Gender Parity Index (Primary & Secondary)",
+    subtitle = "School Enrollment Parity (F/M Ratio)",
+    y = "Index (0–1)",
+    x = "Year",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+-   India and Luxembourg are near parity or slightly favor females.
+
+-   USA maintains consistent balance.
+
+-   Gender disparity appears largely addressed.
+
+# Education Spending (% GDP)
+
+```{r}
+ed_spending <- dt_sel[`Indicator Name` == indicators[3]]
+ed_spending[, `:=`(Value = as.numeric(Value), Year = as.integer(Year))]
+
+ggplot(ed_spending, aes(x = Year, y = Value, color = `Country Name`, group = `Country Name`)) +
+  geom_line(size = 1.3) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Government Education Expenditure (% of GDP)",
+    subtitle = "Investment in Public Education by Country",
+    y = "% of GDP",
+    x = "Year",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+-   India invests 4%(approx) of GDP in education, the **lowest** among the three.
+
+-   Luxembourg shows the **highest and most stable investment**.
+
+-   U.S. exhibits moderate but consistent funding.
+
+# Tertiary Attainment (Age 25+)
+
+```{r}
+tertiary <- dt_sel[`Indicator Name` == indicators[4]]
+tertiary[, `:=`(Value = as.numeric(Value), Year = as.integer(Year))]
+
+ggplot(tertiary, aes(x = Year, y = Value, color = `Country Name`, group = `Country Name`)) +
+  geom_line(size = 1.3) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Tertiary Education Attainment (25+)",
+    subtitle = "Share of Population with Post-secondary Education",
+    y = "% of Adults (25+)",
+    x = "Year",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+-   Luxembourg and the USA lead in tertiary attainment.
+
+-   India lags behind and shows **declining** attainment rates.
+
+-   Indicates need for sustained investment in higher education.
+
+# Adolescent Fertility Rate
+
+```{r}
+fertility <- dt_sel[`Indicator Name` == indicators[5]]
+fertility[, `:=`(Value = as.numeric(Value), Year = as.integer(Year))]
+
+ggplot(fertility, aes(x = Year, y = Value, color = `Country Name`, group = `Country Name`)) +
+  geom_line(size = 1.3) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Adolescent Fertility Rate",
+    subtitle = "Births per 1,000 Women Ages 15–19",
+    y = "Births per 1,000 Women",
+    x = "Year",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 13),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+-   India has seen a **rise** in adolescent fertility, indicating gaps in health education.
+
+-   Luxembourg and the U.S. show **lower and decreasing** rates.
+
+-   Higher fertility correlates with lower educational attainment.
+
+# Summary Tables(Average Values)
+
+```{r}
+# Ensure 'Value' is numeric
+dt_sel[, Value := as.numeric(Value)]
+
+# Compute summary table
+sum_tbl <- dt_sel[
+  , .(Mean_Value = mean(Value, na.rm = TRUE)), 
+  keyby = .(`Country Name`, `Indicator Name`)
+]
+print(sum_tbl)
+
+```
+
+#Decision : Cross Country Trends
+
+-   **India**: Higher NEET rate and fertility, lower tertiary education.
+
+-   **Luxembourg**: High parity index and spending.
+
+-   **USA**: Steady investment, but large variation in outcomes.
+
+#Interpretation:
+
+-   **Education spending** and **gender parity** are strong predictors of youth inclusion.
+
+-   Countries with low fertility often have higher tertiary attainment.
+
+# Efficient data.table Code Example
+
+```{r}
+# Max NEET year by country
+neet[, .SD[which.max(Value)], keyby = `Country Name`]
+```
+
+# Personalisation Notes
+
+-   Used **custom LaTeX header** for fonts and spacing.
+
+-   Fonts: Fira Sans.
+
+-   Beamer theme: compact with clean lines.
+
+# Final Thoughts
+
+-   Investment in education correlates strongly with youth development.
+
+-   Gender-focused policies improve parity and outcomes.
+
+# References
+
+-   Humanitarian Data Exchange: https://data.humdata.org/
+
+-   World Bank Education & Development Indicators
